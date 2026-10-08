@@ -89,8 +89,6 @@ public class SqlInjectionStoredProcedure extends HttpServlet {
                 + bundle.getString("response.table.name")
                 + "</th><th>"
                 + bundle.getString("response.table.address")
-                + "</th><th>"
-                + bundle.getString("response.table.comment")
                 + "</th></tr>";
 
         log.debug("Opening Result Set from query");
@@ -101,9 +99,8 @@ public class SqlInjectionStoredProcedure extends HttpServlet {
                   + Encode.forHtml(resultSet.getString(2))
                   + "</td><td>"
                   + Encode.forHtml(resultSet.getString(3))
-                  + "</td><td>"
-                  + Encode.forHtml(resultSet.getString(4))
                   + "</td></tr>";
+          // Internal customer comments are never returned to the client
           i++;
         }
         conn.close();
