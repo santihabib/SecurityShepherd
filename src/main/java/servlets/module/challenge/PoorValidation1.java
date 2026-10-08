@@ -66,25 +66,25 @@ public class PoorValidation1 extends HttpServlet {
       out.print(getServletInfo());
       String htmlOutput = new String();
       try {
-        int pineappleAmount = Integer.parseInt(request.getParameter("pineappleAmount"));
+        int pineappleAmount = parseQuantity(request.getParameter("pineappleAmount"));
         log.debug("pineappleAmount - " + pineappleAmount);
-        int orangeAmount = Integer.parseInt(request.getParameter("orangeAmount"));
+        int orangeAmount = parseQuantity(request.getParameter("orangeAmount"));
         log.debug("orangeAmount - " + orangeAmount);
-        int appleAmount = Integer.parseInt(request.getParameter("appleAmount"));
+        int appleAmount = parseQuantity(request.getParameter("appleAmount"));
         log.debug("appleAmount - " + appleAmount);
-        int bananaAmount = Integer.parseInt(request.getParameter("bananaAmount"));
+        int bananaAmount = parseQuantity(request.getParameter("bananaAmount"));
         log.debug("bananaAmount - " + bananaAmount);
 
         // Working out costs
-        int pineappleCost = pineappleAmount * 30;
-        int orangeCost = orangeAmount * 3000;
-        int appleCost = appleAmount * 45;
-        int bananaCost = bananaAmount * 15;
+        long pineappleCost = pineappleAmount * 30L;
+        long orangeCost = orangeAmount * 3000L;
+        long appleCost = appleAmount * 45L;
+        long bananaCost = bananaAmount * 15L;
 
         htmlOutput = new String();
 
         // Work Out Final Cost
-        int finalCost = pineappleCost + appleCost + bananaCost + orangeCost;
+        long finalCost = pineappleCost + appleCost + bananaCost + orangeCost;
 
         // Output Order
         htmlOutput =
@@ -121,5 +121,23 @@ public class PoorValidation1 extends HttpServlet {
     } else {
       log.error(levelName + " servlet accessed with no session");
     }
+  }
+
+  /** Largest quantity of a single item that one order may contain. */
+  private static final int MAX_QUANTITY = 1000;
+
+  /**
+   * Parses an order quantity and enforces that it is a whole number inside the range the shop
+   * actually sells. Negative or absurdly large quantities are rejected as a bad order.
+   *
+   * @param raw Quantity as submitted by the client
+   * @return The validated quantity
+   */
+  private static int parseQuantity(String raw) {
+    int amount = Integer.parseInt(raw == null ? "" : raw.trim());
+    if (amount < 0 || amount > MAX_QUANTITY) {
+      throw new IllegalArgumentException("Quantity out of range: " + amount);
+    }
+    return amount;
   }
 }

@@ -103,7 +103,14 @@ public class SessionManagement6SecretQuestion extends HttpServlet {
             callstmt.setString(2, subAns);
             log.debug("Running secret Answer Check");
             ResultSet rs = callstmt.executeQuery();
-            if (rs.next()) {
+            // A secret answer only unlocks an account this session already proved it owns
+            // by signing in; otherwise the answer alone (guessed or looked up) is worthless.
+            Object verified = ses.getAttribute(SessionManagement6.VERIFIED_ACCOUNT_ATTRIBUTE);
+            boolean ownsAccount = verified != null && verified.toString().equals(subEmail);
+            if (!ownsAccount) {
+              log.debug("Secret answer submitted for an account this session has not verified");
+            }
+            if (ownsAccount && rs.next()) {
               log.debug("Correct Answer Submitted");
               // Get key and add it to the output
               String userKey =
@@ -225,10 +232,8 @@ public class SessionManagement6SecretQuestion extends HttpServlet {
                         ApplicationRoot, "BrokenAuthAndSessMangChalSix");
                 log.debug("Getting Secret Question");
                 PreparedStatement callstmt =
-                    conn.prepareStatement(
-                        "SELECT secretQuestion FROM users WHERE userAddress = \""
-                            + subEmail
-                            + "\"");
+                    conn.prepareStatement("SELECT secretQuestion FROM users WHERE userAddress = ?");
+                callstmt.setString(1, subEmail);
                 ResultSet rs = callstmt.executeQuery();
                 if (rs.next()) {
                   log.debug("'Valid' User Detected");

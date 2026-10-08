@@ -43,6 +43,9 @@ public class SessionManagement3 extends HttpServlet {
   private static final long serialVersionUID = 1L;
   private static final Logger log = LogManager.getLogger(SessionManagement3.class);
   private static String levelName = "Session Management Challenge Three";
+  /** Session attribute holding the challenge account this session has authenticated as. */
+  public static final String AUTHENTICATED_USER_ATTRIBUTE = "sessionManagement3AuthenticatedUser";
+
   private static String levelHash =
       "t193c6634f049bcf65cdcac72269eeac25dbb2a6887bdb38873e57d0ef447bc3";
   private static String levelResult = "e62008dc47f5eb065229d48963";
@@ -132,6 +135,7 @@ public class SessionManagement3 extends HttpServlet {
             ResultSet resultSet2 = callstmt.executeQuery();
             if (resultSet2.next()) {
               log.debug("Successful Admin Login");
+              ses.setAttribute(AUTHENTICATED_USER_ATTRIBUTE, resultSet2.getString(1));
               // Get key and add it to the output
               String userKey =
                   Hash.generateUserSolution(levelResult, (String) ses.getAttribute("userName"));
@@ -158,6 +162,7 @@ public class SessionManagement3 extends HttpServlet {
             }
           } else {
             log.debug("Successful Guest Login");
+            ses.setAttribute(AUTHENTICATED_USER_ATTRIBUTE, resultSet.getString(1));
             htmlOutput =
                 makeTable(bundle)
                     + "<h2 class='title'>"

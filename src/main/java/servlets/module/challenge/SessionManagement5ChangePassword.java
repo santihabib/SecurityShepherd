@@ -3,12 +3,8 @@ package servlets.module.challenge;
 import dbProcs.Database;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import javax.servlet.ServletException;
@@ -16,7 +12,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import utils.ShepherdLogManager;
@@ -102,35 +97,33 @@ public class SessionManagement5ChangePassword extends HttpServlet {
         log.debug("userName = " + userName);
         log.debug("newPass = " + newPass);
         log.debug("token = " + token);
-        String tokenTime = new String();
-        try {
-          byte[] decodedToken = Base64.decodeBase64(token);
-          tokenTime = new String(decodedToken, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-          log.debug("Could not decode password token");
+        if (token.isEmpty()) {
+          log.debug("No token submitted. Ending Servlet.");
           errorMessage += "<p>" + bundle.getString("changePass.noDecode") + "</p>";
-        }
-        if (tokenTime.isEmpty()) {
-          log.debug("Could not decode token. Ending Servlet.");
           out.write(errorMessage);
         } else {
-          log.debug("Decoded Token = " + tokenTime);
-
-          // Get Time from Token and see if it is inside the last 10 minutes
-          SimpleDateFormat simpleDateFormat = new SimpleDateFormat("EEE MMM d HH:mm:ss Z yyyy");
-          try {
-            Date tokenDateTime = simpleDateFormat.parse(tokenTime);
-            Date currentDateTime = new Date();
-            // Get difference in minutes
-            tokenLife =
-                (int) ((currentDateTime.getTime() / 60000) - (tokenDateTime.getTime() / 60000));
+          // The token is only valid if it is the unguessable one this session was issued,
+          // for this exact account, inside the last 10 minutes. Nothing about it is
+          // derived from client supplied data.
+          Object issuedUser = ses.getAttribute(SessionManagement5SetToken.RESET_USER_ATTRIBUTE);
+          Object issuedToken = ses.getAttribute(SessionManagement5SetToken.RESET_TOKEN_ATTRIBUTE);
+          Object issuedAt = ses.getAttribute(SessionManagement5SetToken.RESET_ISSUED_ATTRIBUTE);
+          boolean tokenMatches =
+              issuedUser != null
+                  && issuedToken != null
+                  && issuedAt != null
+                  && issuedUser.toString().equals(userName)
+                  && issuedToken.toString().equals(token);
+          if (tokenMatches) {
+            long issuedMillis = ((Long) issuedAt).longValue();
+            tokenLife = (int) ((System.currentTimeMillis() / 60000) - (issuedMillis / 60000));
             log.debug("Token life = " + tokenLife);
-          } catch (ParseException e) {
-            log.error("Date Parsing Error: " + e.toString());
-            errorMessage += bundle.getString("changePass.badTokenData") + ": " + e.toString();
+          } else {
+            log.debug("Submitted token was not issued to this session for this account");
+            errorMessage += bundle.getString("changePass.funkyToken");
           }
 
-          if (tokenLife < 10 && tokenLife >= 0) {
+          if (tokenMatches && tokenLife < 10 && tokenLife >= 0) {
             if (newPass.length() >= 12) {
               log.debug("Getting ApplicationRoot");
               String ApplicationRoot = getServletContext().getRealPath("");

@@ -46,6 +46,9 @@ public class SessionManagement6 extends HttpServlet {
   private static final long serialVersionUID = 1L;
   private static final Logger log = LogManager.getLogger(SessionManagement6.class);
   private static String levelName = "Session Management Challenge Six";
+  /** Session attribute: address of the challenge account this session has signed in to. */
+  public static final String VERIFIED_ACCOUNT_ATTRIBUTE = "sessionManagement6VerifiedAccount";
+
   public static String levelHash =
       "b5e1020e3742cf2c0880d4098146c4dde25ebd8ceab51807bad88ff47c316ece";
 
@@ -140,6 +143,7 @@ public class SessionManagement6 extends HttpServlet {
             if (resultSet.next()) {
               // This should never happen. But just in case;
               log.debug("Successful Login");
+              ses.setAttribute(VERIFIED_ACCOUNT_ATTRIBUTE, resultSet.getString(2));
               // Get key and add it to the output
               String userKey =
                   Hash.generateUserSolution(

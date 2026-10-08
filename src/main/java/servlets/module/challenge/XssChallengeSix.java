@@ -3,6 +3,8 @@ package servlets.module.challenge;
 import dbProcs.Getter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import javax.servlet.ServletException;
@@ -13,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.owasp.encoder.Encode;
 import utils.FindXSS;
 import utils.Hash;
 import utils.ShepherdLogManager;
@@ -80,7 +83,11 @@ public class XssChallengeSix extends HttpServlet {
           String searchTerm = request.getParameter("searchTerm");
           log.debug("User Submitted - " + searchTerm);
           searchTerm = XssFilter.anotherBadUrlValidate(searchTerm);
-          userPost = "<a href=\"" + searchTerm + "\">Your HTTP Link!</a>";
+          searchTerm =
+              safeHttpUrl(
+                  searchTerm, "https://www.google.com/search?q=What+does+a+HTTP+link+look+like");
+          userPost =
+              "<a href=\"" + Encode.forHtmlAttribute(searchTerm) + "\">Your HTTP Link!</a>";
           log.debug("After Sanitising - " + searchTerm);
 
           boolean xssDetected = FindXSS.search(userPost);
@@ -116,6 +123,33 @@ public class XssChallengeSix extends HttpServlet {
     } catch (Exception e) {
       out.write(errors.getString("error.funky"));
       log.fatal(levelName + " - " + e.toString());
+    }
+  }
+
+  /**
+   * Accepts only absolute http or https URLs. Anything else (javascript:, data:, relative
+   * paths, unparsable input) is replaced with the fallback so the href can never carry script.
+   *
+   * @param candidate URL supplied by the client
+   * @param fallback URL to use when the candidate is not acceptable
+   * @return A safe absolute http(s) URL
+   */
+  private static String safeHttpUrl(String candidate, String fallback) {
+    if (candidate == null) {
+      return fallback;
+    }
+    try {
+      URI uri = new URI(candidate.trim());
+      String scheme = uri.getScheme();
+      if (scheme == null || uri.getHost() == null) {
+        return fallback;
+      }
+      if (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https")) {
+        return fallback;
+      }
+      return uri.toString();
+    } catch (URISyntaxException e) {
+      return fallback;
     }
   }
 }

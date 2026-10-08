@@ -16,6 +16,7 @@ import javax.servlet.http.HttpSession;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.owasp.encoder.Encode;
+import utils.Hash;
 import utils.ShepherdLogManager;
 import utils.Validate;
 
@@ -49,6 +50,15 @@ public class SessionManagement5SetToken extends HttpServlet {
   private static final long serialVersionUID = 1L;
   private static final Logger log = LogManager.getLogger(SessionManagement5SetToken.class);
   private static String levelName = "SessionManagement5SetToken";
+  /** Session attribute: account the outstanding reset token was issued for. */
+  public static final String RESET_USER_ATTRIBUTE = "sessionManagement5ResetUser";
+
+  /** Session attribute: the outstanding reset token. */
+  public static final String RESET_TOKEN_ATTRIBUTE = "sessionManagement5ResetToken";
+
+  /** Session attribute: epoch milliseconds at which the outstanding token was issued. */
+  public static final String RESET_ISSUED_ATTRIBUTE = "sessionManagement5ResetIssued";
+
   public static String levelHash = SessionManagement5.levelHash;
 
   /**
@@ -110,6 +120,11 @@ public class SessionManagement5SetToken extends HttpServlet {
         // Is the username valid?
         if (resultSet.next()) {
           log.debug("User found");
+          // Issue an unpredictable token bound to this account and keep it server side. It
+          // is (notionally) delivered by email and is never written to the response.
+          ses.setAttribute(RESET_USER_ATTRIBUTE, resultSet.getString(1));
+          ses.setAttribute(RESET_TOKEN_ATTRIBUTE, Hash.randomString());
+          ses.setAttribute(RESET_ISSUED_ATTRIBUTE, Long.valueOf(System.currentTimeMillis()));
           htmlOutput =
               bundle.getString("setToken.sentTo.1")
                   + " '"

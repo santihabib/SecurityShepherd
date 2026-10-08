@@ -81,20 +81,16 @@ public class CsrfChallengeTargetJSON extends HttpServlet {
         String plusId = (String) json.get("userId");
         log.debug("User Submitted - " + plusId);
         String userId = (String) ses.getAttribute("userStamp");
-        if (!userId.equals(plusId)) {
+        if (plusId == null || !plusId.trim().equals(userId)) {
+          // Only the authenticated user's own counter can ever be touched. A request that
+          // names a different user is a forged cross-site request and is ignored.
+          log.debug("Submitted user id does not belong to the current session, ignoring");
+        } else {
           String ApplicationRoot = getServletContext().getRealPath("");
-          String userName = (String) ses.getAttribute("userName");
-          String attackerName = Getter.getUserName(ApplicationRoot, plusId);
-          if (attackerName != null) {
-            log.debug(userName + " is been CSRF'd by " + attackerName);
-
-            log.debug("Attempting to Increment ");
-            String moduleHash = CsrfChallengeJSON.getLevelHash();
-            String moduleId = Getter.getModuleIdFromHash(ApplicationRoot, moduleHash);
-            result = Setter.updateCsrfCounter(ApplicationRoot, moduleId, plusId);
-          } else {
-            log.error("UserId '" + plusId + "' could not be found.");
-          }
+          log.debug("Attempting to Increment counter of " + userId);
+          String moduleHash = CsrfChallengeJSON.getLevelHash();
+          String moduleId = Getter.getModuleIdFromHash(ApplicationRoot, moduleHash);
+          result = Setter.updateCsrfCounter(ApplicationRoot, moduleId, userId);
         }
 
         if (result) {

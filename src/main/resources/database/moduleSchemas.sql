@@ -837,7 +837,7 @@ INSERT INTO `CryptShop`.`coupons` (`couponId`, `perCentOff`, `couponCode`, `item
 INSERT INTO `CryptShop`.`coupons` (`couponId`, `perCentOff`, `couponCode`, `itemId`) VALUES (4, 50, 'HalfOffOranges', 2);
 INSERT INTO `CryptShop`.`coupons` (`couponId`, `perCentOff`, `couponCode`, `itemId`) VALUES (5, 10, 'PleaseTakeABanana', 4);
 INSERT INTO `CryptShop`.`coupons` (`couponId`, `perCentOff`, `couponCode`, `itemId`) VALUES (6, 50, 'HalfOffBananas', 4);
-INSERT INTO `CryptShop`.`coupons` (`couponId`, `perCentOff`, `couponCode`, `itemId`) VALUES (432197, 100, 'e!c!3etZoumo@Stu4rU176', 2);
+INSERT INTO `CryptShop`.`coupons` (`couponId`, `perCentOff`, `couponCode`, `itemId`) VALUES (432197, 100, 'c0ffee9d3b7a4f0e8d21b5c6a7e8f90a1b2c3d4e', 2);
 COMMIT;
 
 -- -----------------------------------------------------

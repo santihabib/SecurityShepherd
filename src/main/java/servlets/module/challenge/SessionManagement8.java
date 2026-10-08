@@ -93,23 +93,10 @@ public class SessionManagement8 extends HttpServlet {
           log.debug("Cookie value: " + theCookie.getValue());
 
           if (theCookie.getValue().equals("nmHqLjQknlHs")) {
-            log.debug("Super User Cookie detected");
-            // Get key and add it to the output
-            String userKey =
-                Hash.generateUserSolution(
-                    Getter.getModuleResultFromHash(getServletContext().getRealPath(""), levelHash),
-                    (String) ses.getAttribute("userName"));
-            htmlOutput =
-                "<h2 class='title'>"
-                    + bundle.getString("response.superUserClub")
-                    + "</h2>"
-                    + "<p>"
-                    + bundle.getString("response.welcomeSuperUser")
-                    + " "
-                    + "<a>"
-                    + userKey
-                    + "</a>"
-                    + "</p>";
+            // A role carried in a client-side cookie is not trusted. Super user content is
+            // never served on the strength of this value.
+            log.debug("Client presented the super user role cookie; claim ignored");
+            htmlOutput += "<!-- " + bundle.getString("response.invalidRole") + " -->";
           } else if (!theCookie.getValue().equals("LmH6nmbC")) {
             log.debug("Tampered role cookie detected: " + theCookie.getValue());
             htmlOutput += "<!-- " + bundle.getString("response.invalidRole") + " -->";

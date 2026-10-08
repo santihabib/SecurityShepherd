@@ -102,26 +102,17 @@ public class CsrfChallengeTargetFour extends HttpServlet {
         log.debug("csrfToken Submitted - '" + csrfToken + "'");
         log.debug("storedCsrf Token is - '" + storedToken + "'");
 
-        if (!userId.equals(plusId)) {
-          if (validCsrfToken(ApplicationRoot, csrfToken)) // Poor CSRF Validation Method
-          {
-            log.debug("'Valid' Nonce Value Submitted");
-            String userName = (String) ses.getAttribute("userName");
-            String attackerName = Getter.getUserName(ApplicationRoot, plusId);
-            if (attackerName != null) {
-              log.debug(userName + " is been CSRF'd by " + attackerName);
-
-              log.debug("Attempting to Increment ");
-              String moduleId = Getter.getModuleIdFromHash(ApplicationRoot, moduleHash);
-              result = Setter.updateCsrfCounter(ApplicationRoot, moduleId, plusId);
-            } else {
-              log.error("UserId '" + plusId + "' could not be found in system.");
-            }
-          } else {
-            log.debug("User " + plusId + " CSRF attack failed due to invalid nonce");
-          }
+        // The nonce must be the one issued to THIS session (not merely any nonce that
+        // exists in the database) and the counter may only ever be incremented for the
+        // authenticated user. Anything else is a forged cross-site request.
+        if (storedToken.isEmpty() || !storedToken.equals(csrfToken)) {
+          log.debug("Submitted nonce does not match the nonce issued to this session");
+        } else if (!userId.equals(plusId)) {
+          log.debug("Submitted user id does not belong to the current session, ignoring");
         } else {
-          log.debug("User " + userId + " is attacking themselves");
+          log.debug("Attempting to Increment counter of " + userId);
+          String moduleId = Getter.getModuleIdFromHash(ApplicationRoot, moduleHash);
+          result = Setter.updateCsrfCounter(ApplicationRoot, moduleId, userId);
         }
 
         if (result) {

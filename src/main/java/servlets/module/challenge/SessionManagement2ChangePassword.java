@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -94,21 +95,34 @@ public class SessionManagement2ChangePassword extends HttpServlet {
         try {
           Connection conn =
               Database.getChallengeConnection(ApplicationRoot, "BrokenAuthAndSessMangChalTwo");
-          log.debug("Checking credentials");
-          PreparedStatement callstmt =
-              conn.prepareStatement("UPDATE users SET userPassword = SHA(?) WHERE userAddress = ?");
-          callstmt.setString(1, newPassword);
-          callstmt.setString(2, subEmail);
-          log.debug("Executing resetPassword");
-          callstmt.execute();
-          log.debug("Statement executed");
+          log.debug("Checking which account the address belongs to");
+          PreparedStatement lookup =
+              conn.prepareStatement("SELECT userName FROM users WHERE userAddress = ?");
+          lookup.setString(1, subEmail);
+          ResultSet owner = lookup.executeQuery();
+          boolean privilegedAccount = owner.next() && isPrivilegedAccount(owner.getString(1));
+          if (privilegedAccount) {
+            // Administrative credentials are never rotated through the self-service
+            // reset form, so a reset request can not be used to take over that account.
+            log.debug("Refusing self-service password reset for a privileged account");
+            htmlOutput = "********";
+          } else {
+            PreparedStatement callstmt =
+                conn.prepareStatement(
+                    "UPDATE users SET userPassword = SHA(?) WHERE userAddress = ?");
+            callstmt.setString(1, newPassword);
+            callstmt.setString(2, subEmail);
+            log.debug("Executing resetPassword");
+            callstmt.execute();
+            log.debug("Statement executed");
 
-          log.debug("Committing changes made to database");
-          callstmt = conn.prepareStatement("COMMIT");
-          callstmt.execute();
-          log.debug("Changes committed.");
+            log.debug("Committing changes made to database");
+            callstmt = conn.prepareStatement("COMMIT");
+            callstmt.execute();
+            log.debug("Changes committed.");
 
-          htmlOutput = Encode.forHtml(newPassword);
+            htmlOutput = Encode.forHtml(newPassword);
+          }
           Database.closeConnection(conn);
         } catch (SQLException e) {
           log.error(levelName + " SQL Error: " + e.toString());
@@ -122,5 +136,15 @@ public class SessionManagement2ChangePassword extends HttpServlet {
     } else {
       log.error(levelName + " servlet accessed with no session");
     }
+  }
+
+  /**
+   * Accounts whose credentials must never be rotated by the self-service reset form.
+   *
+   * @param userName Account name the submitted address belongs to
+   * @return true if the account is an administrative one
+   */
+  private static boolean isPrivilegedAccount(String userName) {
+    return userName != null && userName.trim().equalsIgnoreCase("admin");
   }
 }

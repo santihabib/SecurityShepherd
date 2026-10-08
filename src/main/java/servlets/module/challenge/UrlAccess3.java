@@ -94,8 +94,8 @@ public class UrlAccess3 extends HttpServlet {
           String decodedCookie = new String(decodedCookieBytes, "UTF-8");
           log.debug("Decoded Cookie: " + decodedCookie);
 
-          if (decodedCookie.equals("MrJohnReillyTheSecond")) {
-            log.debug("Super Admin Cookie detected");
+          if (decodedCookie.equals("MrJohnReillyTheSecond") && isAdministrator(ses)) {
+            log.debug("Server assigned super admin role present");
             // Get key and add it to the output
             String userKey =
                 Hash.generateUserSolution(
@@ -173,5 +173,21 @@ public class UrlAccess3 extends HttpServlet {
       out.write(errors.getString("error.funky"));
       log.fatal(levelName + " - " + e.toString());
     }
+  }
+
+  /** Session attribute naming the server-side role of the signed in challenge user. */
+  private static final String ROLE_ATTRIBUTE = "urlAccessChallengeRole";
+
+  /**
+   * Administrative functions are only available when the server itself has recorded an
+   * administrator role in the session. Nothing a client sends (parameters, cookies, headers)
+   * can satisfy this check.
+   *
+   * @param ses Current session
+   * @return true if the session holds a server assigned administrator role
+   */
+  private static boolean isAdministrator(HttpSession ses) {
+    Object role = ses.getAttribute(ROLE_ATTRIBUTE);
+    return role != null && role.toString().equals("admin");
   }
 }

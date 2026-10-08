@@ -3,6 +3,8 @@ package servlets.module.challenge;
 import dbProcs.Getter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import javax.servlet.ServletException;
@@ -13,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.owasp.encoder.Encode;
 import utils.FindXSS;
 import utils.Hash;
 import utils.ShepherdLogManager;
@@ -88,10 +91,18 @@ public class XssChallengeFour extends HttpServlet {
                     + searchTerm
                     + "</a>";
           } else {
-
-            searchTerm = XssFilter.encodeForHtml(searchTerm);
+            searchTerm =
+                safeHttpUrl(searchTerm, "https://www.owasp.org/index.php/OWASP_Security_Shepherd");
+            // Encode for the attribute context and for the text context separately
+            String attributeSafe = Encode.forHtmlAttribute(searchTerm);
             userPost =
-                "<a href=\"" + searchTerm + "\" alt=\"" + searchTerm + "\">" + searchTerm + "</a>";
+                "<a href=\""
+                    + attributeSafe
+                    + "\" alt=\""
+                    + attributeSafe
+                    + "\">"
+                    + Encode.forHtml(searchTerm)
+                    + "</a>";
             log.debug("After Encoding - " + searchTerm);
             if (FindXSS.search(userPost)) {
               htmlOutput =
@@ -129,6 +140,33 @@ public class XssChallengeFour extends HttpServlet {
     } catch (Exception e) {
       out.write(errors.getString("error.funky"));
       log.fatal("Cross Site Scripting Challenge 4 - " + e.toString());
+    }
+  }
+
+  /**
+   * Accepts only absolute http or https URLs. Anything else (javascript:, data:, relative
+   * paths, unparsable input) is replaced with the fallback so the href can never carry script.
+   *
+   * @param candidate URL supplied by the client
+   * @param fallback URL to use when the candidate is not acceptable
+   * @return A safe absolute http(s) URL
+   */
+  private static String safeHttpUrl(String candidate, String fallback) {
+    if (candidate == null) {
+      return fallback;
+    }
+    try {
+      URI uri = new URI(candidate.trim());
+      String scheme = uri.getScheme();
+      if (scheme == null || uri.getHost() == null) {
+        return fallback;
+      }
+      if (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https")) {
+        return fallback;
+      }
+      return uri.toString();
+    } catch (URISyntaxException e) {
+      return fallback;
     }
   }
 }

@@ -6,8 +6,11 @@ import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.Set;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -81,14 +84,23 @@ public class DirectObject2 extends HttpServlet {
 
         Connection conn =
             Database.getChallengeConnection(ApplicationRoot, "directObjectRefChalTwo");
-        PreparedStatement prepstmt =
-            conn.prepareStatement("SELECT userName, privateMessage FROM users WHERE userId = ?");
-        prepstmt.setString(1, userId);
-        ResultSet resultSet = prepstmt.executeQuery();
-        if (resultSet.next()) {
-          log.debug("Found user: " + resultSet.getString(1));
-          String userName = resultSet.getString(1);
-          String privateMessage = resultSet.getString(2);
+        String userName = null;
+        String privateMessage = null;
+        if (isPublishedProfile(userId)) {
+          PreparedStatement prepstmt =
+              conn.prepareStatement(
+                  "SELECT userName, privateMessage FROM users WHERE userId = ?");
+          prepstmt.setString(1, userId);
+          ResultSet resultSet = prepstmt.executeQuery();
+          if (resultSet.next()) {
+            log.debug("Found user: " + resultSet.getString(1));
+            userName = resultSet.getString(1);
+            privateMessage = resultSet.getString(2);
+          }
+        } else {
+          log.debug("Requested profile is not one the application publishes; refusing lookup");
+        }
+        if (userName != null) {
           htmlOutput =
               "<h2 class='title'>"
                   + userName
@@ -122,5 +134,19 @@ public class DirectObject2 extends HttpServlet {
     } else {
       log.error(levelName + " servlet accessed with no session");
     }
+  }
+
+  /** Identifiers of the profiles this page offers. Anything else is not addressable. */
+  private static final Set<String> PUBLISHED_PROFILES =
+      new HashSet<String>(Arrays.asList("c81e728d9d4c2f636f067f89cc14862c", "eccbc87e4b5ce2fe28308fd9f2a7baf3", "e4da3b7fbbce2345d7772b0674a318d5", "8f14e45fceea167a5a36dedd4bea2543", "6512bd43d9caa6e02c990b0a82652dca"));
+
+  /**
+   * Checks whether the submitted identifier refers to a profile the user is allowed to view.
+   *
+   * @param userId Identifier submitted by the client
+   * @return true only for a published profile identifier
+   */
+  private static boolean isPublishedProfile(String userId) {
+    return userId != null && PUBLISHED_PROFILES.contains(userId.trim());
   }
 }

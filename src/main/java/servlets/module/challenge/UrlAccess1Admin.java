@@ -81,6 +81,10 @@ public class UrlAccess1Admin extends HttpServlet {
         } else {
           log.debug("User Submitted - " + userData);
         }
+        if (!isAdministrator(ses)) {
+          log.debug("Administrative function requested without an administrator role");
+          tamperedRequest = true;
+        }
 
         if (!tamperedRequest) {
           String userKey =
@@ -118,5 +122,21 @@ public class UrlAccess1Admin extends HttpServlet {
     } else {
       log.error(levelName + " servlet accessed with no session");
     }
+  }
+
+  /** Session attribute naming the server-side role of the signed in challenge user. */
+  private static final String ROLE_ATTRIBUTE = "urlAccessChallengeRole";
+
+  /**
+   * Administrative functions are only available when the server itself has recorded an
+   * administrator role in the session. Nothing a client sends (parameters, cookies, headers)
+   * can satisfy this check.
+   *
+   * @param ses Current session
+   * @return true if the session holds a server assigned administrator role
+   */
+  private static boolean isAdministrator(HttpSession ses) {
+    Object role = ses.getAttribute(ROLE_ATTRIBUTE);
+    return role != null && role.toString().equals("admin");
   }
 }

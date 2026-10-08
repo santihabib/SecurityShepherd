@@ -11,7 +11,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.owasp.encoder.Encode;
 import utils.ShepherdLogManager;
 import utils.Validate;
 
@@ -71,19 +70,12 @@ public class BrokenCrypto3 extends HttpServlet {
         String userData = request.getParameter("userData");
         log.debug("User Submitted - " + userData);
 
-        log.debug("Decrypting user input");
-        // Using level key as encryption key
-        String decryptedUserData = decrypt(userData, levelResult);
-        log.debug("Decrypted to: " + decryptedUserData);
-
-        htmlOutput =
-            "<h2 class='title'>"
-                + bundle.getString("insecureCryptoStorage.3.plaintextResult")
-                + "</h2><p>"
-                + bundle.getString("insecureCryptoStorage.3.plaintextResult.message")
-                + "<br/><br/><em>"
-                + Encode.forHtml(decryptedUserData)
-                + "</em></p>";
+        // This endpoint used to behave as a decryption oracle: whatever cipher text the
+        // client submitted was decrypted with the secret level key and echoed back, which
+        // leaks the key material one block at a time. User supplied data is no longer
+        // decrypted or reflected.
+        log.debug("Refusing to decrypt client supplied cipher text");
+        htmlOutput = errors.getString("error.funky");
       } catch (Exception e) {
         log.fatal(levelName + " - " + e.toString());
         htmlOutput = errors.getString("error.funky");
