@@ -46,6 +46,7 @@ public class SessionManagement7 extends HttpServlet {
   private static final long serialVersionUID = 1L;
   private static final Logger log = LogManager.getLogger(SessionManagement7.class);
   private static String levelName = "Session Management Challenge 7";
+
   /** Session attribute: address of the challenge account this session has signed in to. */
   public static final String VERIFIED_ACCOUNT_ATTRIBUTE = "sessionManagement7VerifiedAccount";
 

@@ -43,6 +43,7 @@ public class SessionManagement3 extends HttpServlet {
   private static final long serialVersionUID = 1L;
   private static final Logger log = LogManager.getLogger(SessionManagement3.class);
   private static String levelName = "Session Management Challenge Three";
+
   /** Session attribute holding the challenge account this session has authenticated as. */
   public static final String AUTHENTICATED_USER_ATTRIBUTE = "sessionManagement3AuthenticatedUser";
 

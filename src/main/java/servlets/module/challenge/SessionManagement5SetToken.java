@@ -50,6 +50,7 @@ public class SessionManagement5SetToken extends HttpServlet {
   private static final long serialVersionUID = 1L;
   private static final Logger log = LogManager.getLogger(SessionManagement5SetToken.class);
   private static String levelName = "SessionManagement5SetToken";
+
   /** Session attribute: account the outstanding reset token was issued for. */
   public static final String RESET_USER_ATTRIBUTE = "sessionManagement5ResetUser";
 

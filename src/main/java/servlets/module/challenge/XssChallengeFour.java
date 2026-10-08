@@ -20,7 +20,6 @@ import utils.FindXSS;
 import utils.Hash;
 import utils.ShepherdLogManager;
 import utils.Validate;
-import utils.XssFilter;
 
 /**
  * Cross Site Scripting Challenge Four control class. <br>
@@ -144,8 +143,8 @@ public class XssChallengeFour extends HttpServlet {
   }
 
   /**
-   * Accepts only absolute http or https URLs. Anything else (javascript:, data:, relative
-   * paths, unparsable input) is replaced with the fallback so the href can never carry script.
+   * Accepts only absolute http or https URLs. Anything else (javascript:, data:, relative paths,
+   * unparsable input) is replaced with the fallback so the href can never carry script.
    *
    * @param candidate URL supplied by the client
    * @param fallback URL to use when the candidate is not acceptable

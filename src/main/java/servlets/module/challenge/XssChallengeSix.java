@@ -86,8 +86,7 @@ public class XssChallengeSix extends HttpServlet {
           searchTerm =
               safeHttpUrl(
                   searchTerm, "https://www.google.com/search?q=What+does+a+HTTP+link+look+like");
-          userPost =
-              "<a href=\"" + Encode.forHtmlAttribute(searchTerm) + "\">Your HTTP Link!</a>";
+          userPost = "<a href=\"" + Encode.forHtmlAttribute(searchTerm) + "\">Your HTTP Link!</a>";
           log.debug("After Sanitising - " + searchTerm);
 
           boolean xssDetected = FindXSS.search(userPost);
@@ -127,8 +126,8 @@ public class XssChallengeSix extends HttpServlet {
   }
 
   /**
-   * Accepts only absolute http or https URLs. Anything else (javascript:, data:, relative
-   * paths, unparsable input) is replaced with the fallback so the href can never carry script.
+   * Accepts only absolute http or https URLs. Anything else (javascript:, data:, relative paths,
+   * unparsable input) is replaced with the fallback so the href can never carry script.
    *
    * @param candidate URL supplied by the client
    * @param fallback URL to use when the candidate is not acceptable

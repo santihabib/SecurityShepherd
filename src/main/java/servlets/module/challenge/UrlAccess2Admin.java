@@ -124,8 +124,8 @@ public class UrlAccess2Admin extends HttpServlet {
 
   /**
    * Administrative functions are only available when the server itself has recorded an
-   * administrator role in the session. Nothing a client sends (parameters, cookies, headers)
-   * can satisfy this check.
+   * administrator role in the session. Nothing a client sends (parameters, cookies, headers) can
+   * satisfy this check.
    *
    * @param ses Current session
    * @return true if the session holds a server assigned administrator role

@@ -88,8 +88,7 @@ public class DirectObject1 extends HttpServlet {
         String privateMessage = null;
         if (isPublishedProfile(userId)) {
           PreparedStatement prepstmt =
-              conn.prepareStatement(
-                  "SELECT userName, privateMessage FROM users WHERE userId = ?");
+              conn.prepareStatement("SELECT userName, privateMessage FROM users WHERE userId = ?");
           prepstmt.setString(1, userId);
           ResultSet resultSet = prepstmt.executeQuery();
           if (resultSet.next()) {
